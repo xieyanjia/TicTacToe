@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Media;
 using System.Windows.Forms;
 
 namespace TicTacToe
@@ -9,39 +8,33 @@ namespace TicTacToe
     public partial class Form1 : Form
     {
         // ───────────── 遊戲狀態 ─────────────
-        private string[] board = new string[9];   // "", "X", "O"
-        private bool isPlayerTurn = true;          // true = 玩家(X)，false = AI(O)
+        private string[] board = new string[9];
+        private bool isPlayerTurn = true;
         private int playerScore = 0;
         private int aiScore = 0;
         private int drawScore = 0;
         private bool gameOver = false;
+        private int[] winLine = null;
 
-        // ───────────── UI 元件 ─────────────
+        // ───────────── 棋盤格子 ─────────────
         private Panel[] cells = new Panel[9];
-        private Label lblStatus;
-        private Label lblPlayerScore;
-        private Label lblAiScore;
-        private Label lblDrawScore;
-        private Button btnRestart;
-        private Panel boardPanel;
 
         // ───────────── 顏色主題 ─────────────
-        private readonly Color BG_DARK      = Color.FromArgb(15, 15, 25);
-        private readonly Color BG_PANEL     = Color.FromArgb(25, 25, 40);
-        private readonly Color CELL_NORMAL  = Color.FromArgb(35, 35, 55);
-        private readonly Color CELL_HOVER   = Color.FromArgb(50, 50, 80);
-        private readonly Color CELL_WIN     = Color.FromArgb(30, 80, 60);
-        private readonly Color COLOR_X      = Color.FromArgb(255, 100, 100);
-        private readonly Color COLOR_O      = Color.FromArgb(80, 180, 255);
+        private readonly Color BG_DARK = Color.FromArgb(15, 15, 25);
+        private readonly Color BG_PANEL = Color.FromArgb(25, 25, 40);
+        private readonly Color CELL_NORMAL = Color.FromArgb(35, 35, 55);
+        private readonly Color CELL_HOVER = Color.FromArgb(50, 50, 80);
+        private readonly Color CELL_WIN = Color.FromArgb(30, 80, 60);
+        private readonly Color COLOR_X = Color.FromArgb(255, 100, 100);
+        private readonly Color COLOR_O = Color.FromArgb(80, 180, 255);
         private readonly Color COLOR_ACCENT = Color.FromArgb(255, 200, 50);
-        private readonly Color COLOR_TEXT   = Color.FromArgb(220, 220, 240);
-        private readonly Color GRID_LINE    = Color.FromArgb(70, 70, 110);
+        private readonly Color GRID_LINE = Color.FromArgb(70, 70, 110);
 
-        // ───────────── 音效 (beep 模擬) ─────────────
-        private void PlayMove()  => System.Threading.Tasks.Task.Run(() => Console.Beep(600, 80));
-        private void PlayWin()   => System.Threading.Tasks.Task.Run(() => { Console.Beep(523, 120); Console.Beep(659, 120); Console.Beep(784, 200); });
-        private void PlayLose()  => System.Threading.Tasks.Task.Run(() => { Console.Beep(400, 120); Console.Beep(350, 120); Console.Beep(300, 200); });
-        private void PlayDraw()  => System.Threading.Tasks.Task.Run(() => { Console.Beep(500, 100); Console.Beep(500, 100); });
+        // ───────────── 音效 ─────────────
+        private void PlayMove() => System.Threading.Tasks.Task.Run(() => Console.Beep(600, 80));
+        private void PlayWin() => System.Threading.Tasks.Task.Run(() => { Console.Beep(523, 120); Console.Beep(659, 120); Console.Beep(784, 200); });
+        private void PlayLose() => System.Threading.Tasks.Task.Run(() => { Console.Beep(400, 120); Console.Beep(350, 120); Console.Beep(300, 200); });
+        private void PlayDraw() => System.Threading.Tasks.Task.Run(() => { Console.Beep(500, 100); Console.Beep(500, 100); });
 
         // ───────────── 勝利組合 ─────────────
         private readonly int[][] WIN_LINES =
@@ -54,92 +47,25 @@ namespace TicTacToe
         public Form1()
         {
             InitializeComponent();
-            BuildUI();
+            SetupUI();
             StartNewGame();
         }
 
         // ═══════════════════════════════════════
-        //  UI 建構
+        //  初始化（補充 Designer 做不到的部分）
         // ═══════════════════════════════════════
-        private void BuildUI()
+        private void SetupUI()
         {
-            this.Text = "井字棋 Tic-Tac-Toe";
-            this.Size = new Size(520, 680);
-            this.MinimumSize = new Size(520, 680);
-            this.MaximumSize = new Size(520, 680);
-            this.BackColor = BG_DARK;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Font = new Font("Segoe UI", 10f);
-
-            // ── 標題 ──
-            var lblTitle = new Label
-            {
-                Text = "井字棋",
-                Font = new Font("Microsoft JhengHei", 26f, FontStyle.Bold),
-                ForeColor = COLOR_ACCENT,
-                AutoSize = true,
-                Location = new Point(0, 20),
-            };
-            lblTitle.Left = (520 - lblTitle.PreferredWidth) / 2;
-            this.Controls.Add(lblTitle);
-
-            var lblSub = new Label
-            {
-                Text = "TIC-TAC-TOE",
-                Font = new Font("Consolas", 11f, FontStyle.Regular),
-                ForeColor = Color.FromArgb(120, 120, 160),
-                AutoSize = true,
-                Location = new Point(0, 60),
-            };
-            lblSub.Left = (520 - lblSub.PreferredWidth) / 2;
-            this.Controls.Add(lblSub);
-
-            // ── 計分板 ──
-            var scorePanel = new Panel
-            {
-                Size = new Size(440, 70),
-                Location = new Point(40, 90),
-                BackColor = BG_PANEL,
-            };
+            // 計分板圓角
             RoundPanel(scorePanel, 10);
-            this.Controls.Add(scorePanel);
 
-            lblPlayerScore = MakeScoreLabel("你 (X)\n0", COLOR_X, new Point(20, 5));
-            lblDrawScore   = MakeScoreLabel("平局\n0",  COLOR_ACCENT, new Point(160, 5));
-            lblAiScore     = MakeScoreLabel("AI (O)\n0", COLOR_O, new Point(300, 5));
-            scorePanel.Controls.Add(lblPlayerScore);
-            scorePanel.Controls.Add(lblDrawScore);
-            scorePanel.Controls.Add(lblAiScore);
+            // 重新開始按鈕事件
+            btnRestart.FlatAppearance.BorderColor = GRID_LINE;
+            btnRestart.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 70, 110);
+            btnRestart.Click += (s, e) => StartNewGame();
 
-            // ── 狀態列 ──
-            lblStatus = new Label
-            {
-                Text = "你的回合",
-                Font = new Font("Microsoft JhengHei", 14f, FontStyle.Bold),
-                ForeColor = COLOR_X,
-                AutoSize = false,
-                Size = new Size(440, 36),
-                Location = new Point(40, 170),
-                TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.Transparent,
-            };
-            this.Controls.Add(lblStatus);
-
-            // ── 棋盤 ──
-            boardPanel = new Panel
-            {
-                Size = new Size(360, 360),
-                Location = new Point(80, 215),
-                BackColor = Color.Transparent,
-            };
-            boardPanel.Paint += BoardPanel_Paint;
-            this.Controls.Add(boardPanel);
-
-            int cellSize = 110;
-            int gap = 10;
-            int offset = 5;
+            // 建立 9 個棋盤格子
+            int cellSize = 110, gap = 10, offset = 5;
             for (int i = 0; i < 9; i++)
             {
                 int row = i / 3, col = i % 3;
@@ -160,44 +86,11 @@ namespace TicTacToe
                 boardPanel.Controls.Add(cell);
                 cells[i] = cell;
             }
-
-            // ── 重新開始按鈕 ──
-            btnRestart = new Button
-            {
-                Text = "重新開始",
-                Font = new Font("Microsoft JhengHei", 12f, FontStyle.Bold),
-                Size = new Size(160, 45),
-                Location = new Point(180, 590),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(50, 50, 80),
-                ForeColor = COLOR_TEXT,
-                Cursor = Cursors.Hand,
-            };
-            btnRestart.FlatAppearance.BorderColor = GRID_LINE;
-            btnRestart.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 70, 110);
-            btnRestart.Click += (s, e) => StartNewGame();
-            this.Controls.Add(btnRestart);
-        }
-
-        private Label MakeScoreLabel(string text, Color color, Point loc)
-        {
-            return new Label
-            {
-                Text = text,
-                Font = new Font("Microsoft JhengHei", 11f, FontStyle.Bold),
-                ForeColor = color,
-                AutoSize = false,
-                Size = new Size(120, 60),
-                Location = loc,
-                TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.Transparent,
-            };
         }
 
         private void RoundPanel(Panel p, int radius)
         {
-            // 圓角用 Region
-            var path = new System.Drawing.Drawing2D.GraphicsPath();
+            var path = new GraphicsPath();
             path.AddArc(0, 0, radius * 2, radius * 2, 180, 90);
             path.AddArc(p.Width - radius * 2, 0, radius * 2, radius * 2, 270, 90);
             path.AddArc(p.Width - radius * 2, p.Height - radius * 2, radius * 2, radius * 2, 0, 90);
@@ -207,15 +100,8 @@ namespace TicTacToe
         }
 
         // ═══════════════════════════════════════
-        //  繪圖事件
+        //  繪圖
         // ═══════════════════════════════════════
-        private void BoardPanel_Paint(object sender, PaintEventArgs e)
-        {
-            // 棋盤背景已由 cell 覆蓋，不需額外畫線
-        }
-
-        private int[] winLine = null;
-
         private void Cell_Paint(object sender, PaintEventArgs e)
         {
             var cell = (Panel)sender;
@@ -225,7 +111,6 @@ namespace TicTacToe
 
             int w = cell.Width, h = cell.Height;
             int pad = 22;
-
             string val = board[idx];
 
             if (val == "X")
@@ -253,15 +138,13 @@ namespace TicTacToe
 
             PlaceMove(idx, "X");
             PlayMove();
-
             if (CheckEnd("X")) return;
 
             isPlayerTurn = false;
             lblStatus.Text = "AI 思考中…";
             lblStatus.ForeColor = COLOR_O;
 
-            // 小延遲讓 AI 看起來在思考
-            var timer = new Timer { Interval = 400 };
+            var timer = new System.Windows.Forms.Timer { Interval = 400 };
             timer.Tick += (ts, te) =>
             {
                 timer.Stop();
@@ -300,7 +183,6 @@ namespace TicTacToe
             int best = Minimax_BestMove();
             PlaceMove(best, "O");
             PlayMove();
-
             if (!CheckEnd("O"))
             {
                 isPlayerTurn = true;
@@ -338,7 +220,6 @@ namespace TicTacToe
                 return true;
             }
 
-            // 平局
             bool full = true;
             foreach (var v in board) if (v == "") { full = false; break; }
             if (full)
