@@ -1,61 +1,41 @@
-# 井字棋 Tic-Tac-Toe
+# TicTacToe 井字棋遊戲
 
-A Windows Forms Tic-Tac-Toe game with an unbeatable Minimax AI opponent.
+## 專案簡介
 
-## 📸 Screenshot
+本專案是一款使用 **C# Windows Forms** 製作的井字棋遊戲。
 
-> *(Add screenshot here after running)*
+遊戲採用玩家對戰電腦 AI 的方式進行，玩家使用 **X**，AI 使用 **O**。雙方輪流在 3 × 3 棋盤上下棋，只要任一方先連成一條橫線、直線或斜線，即可獲得勝利；若棋盤填滿但沒有任何一方連線，則判定為平手。
 
-## 🎮 Features
+本遊戲除了基本的井字棋玩法之外，也加入了圖形化介面、棋子圖片顯示、音效回饋、分數統計、勝利格子標示與重新開始功能，讓使用者可以透過滑鼠點擊進行完整的遊戲體驗。
 
-- **Player vs AI** — AI uses Minimax algorithm (plays perfectly)
-- **Score tracking** — tracks wins, losses, and draws across rounds
-- **Sound effects** — move sound, win fanfare, lose sound, draw sound
-- **Dark theme UI** — polished dark interface with hover effects
-- **Highlighted win line** — winning cells turn green
+---
 
-## 🕹️ How to Play
+## 遊戲特色
 
-1. You play as **X** (red), AI plays as **O** (blue)
-2. Click any empty cell to place your mark
-3. First to get 3 in a row (horizontal, vertical, or diagonal) wins
-4. Click **重新開始** to start a new round
+- 使用 Windows Forms 製作圖形化介面
+- 3 × 3 井字棋棋盤
+- 玩家與 AI 對戰
+- 玩家使用 X，AI 使用 O
+- 點擊棋盤格子即可下棋
+- AI 會自動思考並下棋
+- 自動判斷勝利、失敗與平手
+- 勝利時會標示獲勝連線
+- 顯示玩家勝場、AI 勝場與平手次數
+- 支援重新開始遊戲
+- 支援 X、O 棋子圖片顯示
+- 支援下棋、勝利、失敗、平手音效
+- AI 使用 Minimax 演算法選擇最佳下棋位置
 
-## 🚀 How to Run
+---
 
-### Requirements
-- Windows 10/11
-- [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) or Visual Studio 2022
+## 遊戲規則
 
-### Run with .NET CLI
-```bash
-cd TicTacToe
-dotnet run
-```
+1. 遊戲開始後，由玩家先手。
+2. 玩家點擊空白格子放置 X。
+3. 玩家下棋後，AI 會自動放置 O。
+4. 雙方輪流下棋。
+5. 當 X 或 O 在橫向、直向或斜向連成三個時，該方獲勝。
+6. 如果棋盤填滿，但雙方都沒有連成一線，則為平手。
+7. 點擊「重新開始」按鈕可以開始新的一局。
 
-### Run with Visual Studio
-1. Open `TicTacToe.sln`
-2. Press `F5`
-
-## 🤖 AI Logic
-
-The AI uses the **Minimax algorithm** — it evaluates all possible future moves and always picks the optimal one. This means the AI is unbeatable; the best outcome for the player is a draw with perfect play.
-
-## 📁 Project Structure
-
-```
-TicTacToe/
-├── TicTacToe.sln
-└── TicTacToe/
-    ├── Program.cs          # Entry point
-    ├── Form1.cs            # Main game logic + UI
-    ├── Form1.Designer.cs   # Form designer stub
-    └── TicTacToe.csproj    # Project config
-```
-
-## 🛠️ Tech Stack
-
-- C# / .NET 6.0
-- Windows Forms (WinForms)
-- GDI+ for custom drawing
-- `Console.Beep()` for sound effects
+---
