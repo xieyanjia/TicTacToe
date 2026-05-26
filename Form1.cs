@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows.Forms;
 
 namespace TicTacToe
@@ -19,9 +20,11 @@ namespace TicTacToe
         // ───────────── 棋盤格子 ─────────────
         private Panel[] cells = new Panel[9];
 
+        // ───────────── 棋子圖片 ─────────────
+        private Image imgX = null;
+        private Image imgO = null;
+
         // ───────────── 顏色主題 ─────────────
-        private readonly Color BG_DARK = Color.FromArgb(15, 15, 25);
-        private readonly Color BG_PANEL = Color.FromArgb(25, 25, 40);
         private readonly Color CELL_NORMAL = Color.FromArgb(35, 35, 55);
         private readonly Color CELL_HOVER = Color.FromArgb(50, 50, 80);
         private readonly Color CELL_WIN = Color.FromArgb(30, 80, 60);
@@ -47,24 +50,49 @@ namespace TicTacToe
         public Form1()
         {
             InitializeComponent();
+            LoadImages();
             SetupUI();
             StartNewGame();
         }
 
         // ═══════════════════════════════════════
-        //  初始化（補充 Designer 做不到的部分）
+        //  載入圖片
+        // ═══════════════════════════════════════
+        private void LoadImages()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string[] candidates = {
+                Path.Combine(baseDir, "Resources"),
+                Path.Combine(baseDir, @"..\..\..\..\Resources"),
+                Path.Combine(baseDir, @"..\..\..\Resources"),
+            };
+
+            string resDir = null;
+            foreach (var c in candidates)
+            {
+                if (Directory.Exists(c)) { resDir = c; break; }
+            }
+
+            if (resDir != null)
+            {
+                string xPath = Path.Combine(resDir, "X.png");
+                string oPath = Path.Combine(resDir, "O.png");
+                if (File.Exists(xPath)) imgX = Image.FromFile(xPath);
+                if (File.Exists(oPath)) imgO = Image.FromFile(oPath);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        //  初始化 UI
         // ═══════════════════════════════════════
         private void SetupUI()
         {
-            // 計分板圓角
             RoundPanel(scorePanel, 10);
 
-            // 重新開始按鈕事件
             btnRestart.FlatAppearance.BorderColor = GRID_LINE;
             btnRestart.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 70, 110);
             btnRestart.Click += (s, e) => StartNewGame();
 
-            // 建立 9 個棋盤格子
             int cellSize = 110, gap = 10, offset = 5;
             for (int i = 0; i < 9; i++)
             {
@@ -100,7 +128,7 @@ namespace TicTacToe
         }
 
         // ═══════════════════════════════════════
-        //  繪圖
+        //  繪圖：優先用圖片，沒圖片則 GDI+ 備用
         // ═══════════════════════════════════════
         private void Cell_Paint(object sender, PaintEventArgs e)
         {
@@ -108,21 +136,32 @@ namespace TicTacToe
             int idx = (int)cell.Tag;
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
             int w = cell.Width, h = cell.Height;
-            int pad = 22;
+            int pad = 15;
             string val = board[idx];
 
             if (val == "X")
             {
-                using var pen = new Pen(COLOR_X, 8f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
-                g.DrawLine(pen, pad, pad, w - pad, h - pad);
-                g.DrawLine(pen, w - pad, pad, pad, h - pad);
+                if (imgX != null)
+                    g.DrawImage(imgX, pad, pad, w - pad * 2, h - pad * 2);
+                else
+                {
+                    using var pen = new Pen(COLOR_X, 8f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                    g.DrawLine(pen, pad, pad, w - pad, h - pad);
+                    g.DrawLine(pen, w - pad, pad, pad, h - pad);
+                }
             }
             else if (val == "O")
             {
-                using var pen = new Pen(COLOR_O, 8f);
-                g.DrawEllipse(pen, pad, pad, w - pad * 2, h - pad * 2);
+                if (imgO != null)
+                    g.DrawImage(imgO, pad, pad, w - pad * 2, h - pad * 2);
+                else
+                {
+                    using var pen = new Pen(COLOR_O, 8f);
+                    g.DrawEllipse(pen, pad, pad, w - pad * 2, h - pad * 2);
+                }
             }
         }
 
@@ -310,6 +349,13 @@ namespace TicTacToe
                 }
                 return best;
             }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            imgX?.Dispose();
+            imgO?.Dispose();
+            base.OnFormClosed(e);
         }
     }
 }
